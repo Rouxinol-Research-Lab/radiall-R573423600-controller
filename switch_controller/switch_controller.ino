@@ -8,6 +8,8 @@
 #define RELAY_8 2
 #define RELAY_ALL 0
 
+// Here we set all relay pins as output and and the relay as off.
+// and then turn on serial communication and send a code to say it is ready (3).
 void setup() {
   pinMode(RELAY_1,OUTPUT);
   pinMode(RELAY_2,OUTPUT);
@@ -32,6 +34,7 @@ void setup() {
   
 }
 
+// This function in turn off all relay except the relay k
 void click(int relay_k) {
   for(int relay = 2; relay <= 9; relay++) {
     if(relay == relay_k)
@@ -43,12 +46,32 @@ void click(int relay_k) {
 
 int presentCommand = 0;
 
+
+// this function detects a command a do something.
+// when it detects something at the serial channel it responds with a code
+// 0 - it changed the relay.
+// 1 - the relay is already on; did nothing.
+// 2 - the command was invalid.
 void loop() {
   if(Serial.available()) {
+
+    // we read the char sent to us, and subtract '0' which is 48 in integer.
     char command = Serial.read() - '0';
+
+    // must be a valid relay or 0 which is the command to turn off all relay
     if(command >= 0 && command <= 8) {
+
+      // it must be a new relay
       if(command != presentCommand) {
+	
         presentCommand = command;
+
+	//ten is subtract by the value of the command because the pins are invarted in relation to the relay. that is:
+	// pin 9 - relay 1
+	// pin 8 - relay 2
+	// ....
+	// pin 3 - relay 7
+	// pin 2 - relay 8
         click(10-presentCommand);
         Serial.print(0);
       } else Serial.print(2);
