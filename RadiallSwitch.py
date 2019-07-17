@@ -46,7 +46,8 @@ class Switch():
 
             # k should be a valid relay between 1 and 8 or should be 0 which turn them all off.
             if (k<0 or k >8):
-                raise ValueError("Parameter is a wrong relay number. There are only 8 relays, therefore the parameter should be between 1 and 8. 0 is also permitted, as it is a command to close all relays.")
+                raise ValueError("Parameter is a wrong relay number. There are only 8 relays, therefore the parameter\
+                                 should be between 1 and 8. 0 is also permitted, as it is a command to close all relays.")
 
             # send a char byte
             self._stdout.write(bytes([48+k]))
@@ -55,10 +56,12 @@ class Switch():
             time.sleep(self._waittime)
             result = int.from_bytes(self._stdout.read(),byteorder='big')-48
 
-            # this should not really happen except in the weirdest of cases. Even though it may seem impossible, do not remove it. You would be surprised
+            # this should not really happen except in the weirdest of cases.
+            # Even though it may seem impossible, do not remove it. You would be surprised
             # of the kind of bugs that exist in software development. Let's be safe. 
             if(result == 1):
-                raise ArduinoError("Command invalid. Something went very wrong because this should have been raised as an error before sending something to the arduino. Maybe you are out-of-sync with the arduino?")
+                raise ArduinoError("Command invalid. Something went very wrong because this should have been\
+                raised as an error before sending something to the arduino. Maybe you are out-of-sync with the arduino?")
         else:
             raise ArduinoError("Serial port access to arduino is closed.")
         
