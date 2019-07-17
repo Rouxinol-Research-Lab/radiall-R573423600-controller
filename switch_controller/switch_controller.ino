@@ -8,8 +8,19 @@
 #define RELAY_8 2
 #define RELAY_ALL 0
 
+
+char presentCommand = 0;
+
+char buttonValueClockwise = 1;
+char previousButtonValueClockwise = 1;
+
+char buttonValueAntiClockwise = 1;
+char previousButtonValueAntiClockwise = 1;
+
+int timeDelay = 100;
+
 // Here we set all relay pins as output and and the relay as off.
-// and then turn on serial communication and send a code to say it is ready (3).
+// and then turn on serial communication and send a code to say it is ready ('o').
 void setup() {
   pinMode(RELAY_1,OUTPUT);
   pinMode(RELAY_2,OUTPUT);
@@ -20,51 +31,44 @@ void setup() {
   pinMode(RELAY_7,OUTPUT);
   pinMode(RELAY_8,OUTPUT);
 
-  digitalWrite(RELAY_1,HIGH);
-  digitalWrite(RELAY_2,HIGH);
-  digitalWrite(RELAY_3,HIGH);
-  digitalWrite(RELAY_4,HIGH);
-  digitalWrite(RELAY_5,HIGH);
-  digitalWrite(RELAY_6,HIGH);
-  digitalWrite(RELAY_7,HIGH);
-  digitalWrite(RELAY_8,HIGH);
+  pinMode(10,INPUT);
+  pinMode(11,INPUT);
+  click(-1);
 
   Serial.begin(9600);
-  Serial.print(3);
+  Serial.print('o');
   
 }
 
 // This function in turn off all relay except the relay k
 void click(int relay_k) {
   for(int relay = 2; relay <= 9; relay++) {
-    if(relay == relay_k)
-      digitalWrite(relay,LOW);
-    else
       digitalWrite(relay,HIGH);
   }
+  if(relay_k >= 2 and relay_k <= 9)
+    digitalWrite(relay_k,LOW);
 }
 
-int presentCommand = 0;
-
+void change(char command,int t) {
+      digitalWrite(9-command,LOW);
+      delay(t);
+      digitalWrite(9-command,HIGH);
+}
 
 // this function detects a command a do something.
 // when it detects something at the serial channel it responds with a code
-// 0 - it changed the relay.
-// 1 - the relay is already on; did nothing.
-// 2 - the command was invalid.
+// 1 to 8 - it changed the relay #.
+// a - set to anticlockwise.
+// c - set to clockwise.
+// i - the command was invalid.
 void loop() {
   if(Serial.available()) {
 
     // we read the char sent to us, and subtract '0' which is 48 in integer.
-    char command = Serial.read() - '0';
-
+    char command = Serial.read();
     // must be a valid relay or 0 which is the command to turn off all relay
-    if(command >= 0 && command <= 8) {
-
-      // it must be a new relay
-      if(command != presentCommand) {
-	
-        presentCommand = command;
+    if(isDigit(command)) {
+      presentCommand = (command-'0'-1)&7;
 
 	//ten is subtract by the value of the command because the pins are invarted in relation to the relay. that is:
 	// pin 9 - relay 1
@@ -72,9 +76,24 @@ void loop() {
 	// ....
 	// pin 3 - relay 7
 	// pin 2 - relay 8
-        click(10-presentCommand);
-        Serial.print(0);
-      } else Serial.print(2);
-    } else if (command != '\n'-'0') Serial.print(1);
+      change(9-presentCommand,timeDelay);
+      Serial.print((int)presentCommand+1);
+    } else if (command != '\n') Serial.print('i');
+  }
+
+  previousButtonValueClockwise = buttonValueClockwise;
+  buttonValueClockwise = digitalRead(10);
+  if(buttonValueClockwise == previousButtonValueClockwise-1) {
+    if(++presentCommand>5)presentCommand = 0;
+    change(presentCommand,timeDelay);
+    Serial.print((int)presentCommand+1);
+  }
+
+  previousButtonValueAntiClockwise = buttonValueAntiClockwise;
+  buttonValueAntiClockwise = digitalRead(11);
+  if(buttonValueAntiClockwise == previousButtonValueAntiClockwise-1) {
+    if(--presentCommand<0) presentCommand = 5;
+    change(presentCommand,timeDelay);
+    Serial.print((int)presentCommand+1);
   }
 }
