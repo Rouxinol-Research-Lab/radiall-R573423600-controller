@@ -8,6 +8,8 @@
 #define RELAY_8 2
 #define RELAY_ALL 0
 
+#define CLOCKWISE_PIN 10
+#define ANTICLOCKWISE_PIN 11
 
 char presentCommand = 0;
 
@@ -31,8 +33,10 @@ void setup() {
   pinMode(RELAY_7,OUTPUT);
   pinMode(RELAY_8,OUTPUT);
 
-  pinMode(10,INPUT);
-  pinMode(11,INPUT);
+  pinMode(CLOCKWISE_PIN,INPUT);
+  pinMode(ANTICLOCKWISE_PIN,INPUT);
+
+  // reset all relay
   click(-1);
 
   Serial.begin(9600);
@@ -49,6 +53,7 @@ void click(int relay_k) {
     digitalWrite(relay_k,LOW);
 }
 
+// activate for a brief time just on relay
 void change(char command,int t) {
       digitalWrite(9-command,LOW);
       delay(t);
@@ -82,7 +87,7 @@ void loop() {
   }
 
   previousButtonValueClockwise = buttonValueClockwise;
-  buttonValueClockwise = digitalRead(10);
+  buttonValueClockwise = digitalRead(CLOCKWISE_PIN);
   if(buttonValueClockwise == previousButtonValueClockwise-1) {
     if(++presentCommand>5)presentCommand = 0;
     change(presentCommand,timeDelay);
@@ -90,7 +95,7 @@ void loop() {
   }
 
   previousButtonValueAntiClockwise = buttonValueAntiClockwise;
-  buttonValueAntiClockwise = digitalRead(11);
+  buttonValueAntiClockwise = digitalRead(ANTICLOCKWISE_PIN);
   if(buttonValueAntiClockwise == previousButtonValueAntiClockwise-1) {
     if(--presentCommand<0) presentCommand = 5;
     change(presentCommand,timeDelay);
