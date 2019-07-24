@@ -1,6 +1,8 @@
 import serial
 import time
 
+#THIS MODULE IS DEPRECATED
+
 # A module with classes to control the arduino with python
 
 #A specific arduino error
