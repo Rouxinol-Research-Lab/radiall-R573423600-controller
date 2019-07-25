@@ -1,6 +1,7 @@
 import serial
 import time
 
+# opa 
 #THIS MODULE IS DEPRECATED
 
 # A module with classes to control the arduino with python
@@ -36,9 +37,9 @@ class Switch():
             i += 1
             if(i == self._attempts):
                 raise serial.SerialTimeoutException("Arduino is not responding.")
-    
+
     def click(self,k):
-        
+
         # checks that there is an open channel, raise an exception if there is not one.
         if(self._stdout.isOpen()):
 
@@ -60,12 +61,12 @@ class Switch():
 
             # this should not really happen except in the weirdest of cases.
             # Even though it may seem impossible, do not remove it. You would be surprised
-            # of the kind of bugs that exist in software development. Let's be safe. 
+            # of the kind of bugs that exist in software development. Let's be safe.
             if(result == 1):
                 raise ArduinoError("Command invalid. Something went very wrong because this should have been\
                 raised as an error before sending something to the arduino. Maybe you are out-of-sync with the arduino?")
         else:
             raise ArduinoError("Serial port access to arduino is closed.")
-        
+
     def close(self):
         self._stdout.close()
