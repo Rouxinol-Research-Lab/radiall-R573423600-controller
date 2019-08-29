@@ -1,4 +1,7 @@
 #include <avr/eeprom.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
 
 /**************************************************************************************************/
 /*                                                                                                */
@@ -15,7 +18,6 @@
 /*                       pin 6 - relay 4                                                          */
 /*                       pin 7 - relay 3                                                          */
 /*                       pin 8 - relay 2                                                          */
-/*                       pin 9 - relay 1                                                          */
 /*                                                                                                */
 /* To activate the relay, one must send a LOW signal to its respective pin.                       */
 /* The pin 11 is used to detect when the button is pressed through a pull up circuit. When that   */
@@ -63,6 +65,9 @@ uint8_t previousButtonValueAntiClockwise = 1;
 // This variable holds how much the relay should be activate. This number should be calibrated.
 uint8_t timeDelay = 50;
 
+// Setting display address at 0x27
+LiquidCrystal_I2C lcd(0x27,16,2);
+
 // Here we set all relay pins as output and and the relay as off.
 // and then turn on serial communication and send a code to say it is ready ('o').
 // We also read the last relay activated and the number of write/erase cycles.
@@ -85,13 +90,26 @@ void setup() {
   
   // reset all relay
   click(-1);
-
+  lcd.init();
+  lcd.backlight();
+  
   Serial.begin(9600);
-  Serial.print("o ");
+  Serial.print("Activated ");
+
+  lcd.setCursor(0,1);
+  lcd.print("Activated: ");
+  lcd.print(presentCommand+1);
+  
   Serial.println(presentCommand+1);
   Serial.print("# of EEPROM write/erase cycles: ");
+  lcd.setCursor(0,0);
+  lcd.print("Cycles ");
+  lcd.print(numberOfCycles);
+  
   Serial.println(numberOfCycles);
   if(numberOfCycles>90000) {
+    lcd.setCursor(0,0);
+    lcd.print("Alert OVER 90k");
     Serial.println("ALERT: The number of write/erase cycles at the EEPROM is over 90k.\n The max number allowed is 100k but it is recommended to change the memory addresses nonetheless.\n Update ADDRESS_COMMAND to the its actual value + 8. Remember that the memory size is limited to 512 bytes.");
   }
 }
@@ -122,19 +140,6 @@ void change(int8_t command,uint8_t t) {
 
 // this function detects a command and activates the relay
 void loop() {
-  if(Serial.available()) {
-
-    // we read the char sent to us, and subtract '0' which is 48 in integer.
-    char command = Serial.read();
-    // must be a valid relay or 0 which is the command to turn off all relay
-    if(isDigit(command)) {
-      presentCommand = (command-'0'-1)&7;
-
-      change(presentCommand,timeDelay);
-      Serial.print("serial: ");
-      Serial.println((int)presentCommand+1);
-    } else if (command != '\n') Serial.print('i');
-  }
 
   // detect if button is pressed
   previousButtonValueAntiClockwise = buttonValueAntiClockwise;
@@ -142,7 +147,11 @@ void loop() {
   if(buttonValueAntiClockwise == previousButtonValueAntiClockwise-1) {
     if(--presentCommand<0) presentCommand = 6;
     change(presentCommand,timeDelay);
-    Serial.print("button: ");
+
+    lcd.setCursor(0,1);
+    lcd.print("Activated: ");
+    lcd.print((int)presentCommand+1);
+    Serial.print("Activated: ");
     Serial.println((int)presentCommand+1);
   }
 }
