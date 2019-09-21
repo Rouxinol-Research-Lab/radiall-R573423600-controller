@@ -138,20 +138,37 @@ void change(int8_t command,uint8_t t) {
       eeprom_write_dword((uint32_t*)ADDRESS_CYCLES,numberOfCycles);
 }
 
+
+int incomingByte = 0;
+
 // this function detects a command and activates the relay
 void loop() {
+  if(Serial.available() > 0) {
+    
+    // read the incoming byte:
+    incomingByte = Serial.read();
+    if(incomingByte == 10) {
+      Serial.println("click");
+      if(--presentCommand<1) presentCommand = 7;
+      change(presentCommand,timeDelay);
+    
+      Serial.print("Activated: ");
+      Serial.println((int)presentCommand-1 
+      );
+    }
 
+  }
   // detect if button is pressed
   previousButtonValueAntiClockwise = buttonValueAntiClockwise;
   buttonValueAntiClockwise = digitalRead(ANTICLOCKWISE_PIN);
   if(buttonValueAntiClockwise == previousButtonValueAntiClockwise-1) {
-    if(--presentCommand<0) presentCommand = 6;
+    if(--presentCommand<1) presentCommand = 7;
     change(presentCommand,timeDelay);
 
     lcd.setCursor(0,1);
     lcd.print("Activated: ");
-    lcd.print((int)presentCommand+1);
+    lcd.print((int)presentCommand-1);
     Serial.print("Activated: ");
-    Serial.println((int)presentCommand+1);
+    Serial.println((int)presentCommand-1);
   }
 }
