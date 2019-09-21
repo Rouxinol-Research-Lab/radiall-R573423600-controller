@@ -9,7 +9,7 @@
 /*                                                                                                */
 /* The switch is controlled by sending DC pulses through 7 relays which in turn are controlled by */
 /* an optical signal that changes the relay. There are 8 relays in the board but the last one is  */
-/* not used. There is one-to-one relation between the pins 2 through 9 and the relay 1 through 8. */
+/* not used. There is one-to-one relation between the pins 2 through 8 and the relay 2 through 8. */
 /*                                                                                                */
 /* This is the setting:  pin 2 - relay 8                                                          */
 /*                       pin 3 - relay 7                                                          */
@@ -22,8 +22,8 @@
 /* To activate the relay, one must send a LOW signal to its respective pin.                       */
 /* The pin 11 is used to detect when the button is pressed through a pull up circuit. When that   */
 /* happens the next relay will be activated for some time and them desactivated. Therefore the    */
-/* relays are activated in decrescent order, starting at relay 7. When last relay activated was   */
-/* relay 1, it is reset to relay 7. The last relay activated is also saved at the eeprom memory.  */
+/* relays are activated in decrescent order, starting at relay 8. When last relay activated was   */
+/* relay 2, it is reset to relay 8. The last relay activated is also saved at the eeprom memory.  */
 /* If the write/erase cycles pass over 90k, a warning will be sent through the serial channell.   */
 /*                                                                                                */
 /**************************************************************************************************/
@@ -48,6 +48,7 @@ uint32_t numberOfCycles = 0;
 #define RELAY_6 4
 #define RELAY_7 3
 #define RELAY_8 2
+
 
 // button pin
 #define ANTICLOCKWISE_PIN 11
@@ -98,9 +99,19 @@ void setup() {
 
   lcd.setCursor(0,1);
   lcd.print("Activated: ");
-  lcd.print(presentCommand+1);
+  // This is an work around the issue that when activating relay 8, instead sending a pulse to switch 6, it sends a pulse to switch 5
+  // I do not know why this is happening
+  switch((int)presentCommand-1){
+    case 6: lcd.print("5   ");break;
+    case 5: lcd.print("4   ");break;
+    case 4: lcd.print("3   ");break;
+    case 3: lcd.print("2   ");break;
+    case 2: lcd.print("1   ");break;
+    case 1: lcd.print("6   ");break;
+    case 0: lcd.print("None");
+  }
   
-  Serial.println(presentCommand+1);
+  Serial.println(presentCommand-1);
   Serial.print("# of EEPROM write/erase cycles: ");
   lcd.setCursor(0,0);
   lcd.print("Cycles ");
@@ -111,6 +122,21 @@ void setup() {
     lcd.setCursor(0,0);
     lcd.print("Alert OVER 90k");
     Serial.println("ALERT: The number of write/erase cycles at the EEPROM is over 90k.\n The max number allowed is 100k but it is recommended to change the memory addresses nonetheless.\n Update ADDRESS_COMMAND to the its actual value + 8. Remember that the memory size is limited to 512 bytes.");
+  }
+}
+
+
+// This is an work around the issue that when activating relay 8, instead sending a pulse to switch 6, it sends a pulse to switch 5
+// I do not know why this is happening
+void print_correct(int pin) { 
+  switch(pin){
+    case 6: lcd.print("5   ");break;
+    case 5: lcd.print("4   ");break;
+    case 4: lcd.print("3   ");break;
+    case 3: lcd.print("2   ");break;
+    case 2: lcd.print("1   ");break;
+    case 1: lcd.print("6   ");break;
+    case 0: lcd.print("None");
   }
 }
 
@@ -167,8 +193,11 @@ void loop() {
 
     lcd.setCursor(0,1);
     lcd.print("Activated: ");
-    lcd.print((int)presentCommand-1);
+    print_correct((int)presentCommand-1);
     Serial.print("Activated: ");
     Serial.println((int)presentCommand-1);
+
+    // Added an delay to stop activating the button twice sometimes when clicking it.
+    delay(1000);
   }
 }
